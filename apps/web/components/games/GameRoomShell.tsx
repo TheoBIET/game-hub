@@ -12,12 +12,8 @@ import { gameLabel } from '@/lib/constants';
 import { TicTacToeGame } from '@/components/games/tictactoe/TicTacToeGame';
 import { Connect4Game } from '@/components/games/connect4/Connect4Game';
 import { RpsGame } from '@/components/games/rps/RpsGame';
-<<<<<<< HEAD
 import { PlateauGame } from '@/components/games/plateau/PlateauGame';
-import { PlaceholderGame } from '@/components/games/PlaceholderGame';
-=======
 import { GifBattleGame } from '@/components/games/gif-battle/GifBattleGame';
->>>>>>> 86e7cf1 (feat(web): branche l'UI gif-battle, retire le placeholder)
 import { GameSettingsPanel } from '@/components/games/GameSettingsPanel';
 import { MatchScoreChip } from '@/components/games/MatchScoreChip';
 import { AccessModeToggle } from '@/components/lobby/AccessModeToggle';
@@ -550,11 +546,7 @@ function GameView({ gameType, snapshot }: { gameType: SupportedGame; snapshot: L
   if (gameType === 'tictactoe') return <TicTacToeGame snapshot={snapshot} />;
   if (gameType === 'connect4') return <Connect4Game snapshot={snapshot} />;
   if (gameType === 'rps') return <RpsGame snapshot={snapshot} />;
-<<<<<<< HEAD
   if (gameType === 'plateau') return <PlateauGame snapshot={snapshot} />;
-  return <PlaceholderGame gameType="gif-battle" />;
-=======
   if (gameType === 'gif-battle') return <GifBattleGame snapshot={snapshot} />;
   return null;
->>>>>>> 86e7cf1 (feat(web): branche l'UI gif-battle, retire le placeholder)
 }
