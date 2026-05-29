@@ -1,9 +1,12 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { FriendState } from '@tabswitch/types';
 import { Avatar } from '@/components/ui/Avatar';
+import { getSocket } from '@/lib/socket';
+import { useLobby } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 const DOT_BY_STATUS: Record<FriendState['status'], string> = {
@@ -31,6 +34,31 @@ function gameLabel(gameType: string | null): string {
 
 export function FriendRow({ friend }: { friend: FriendState }) {
   const t = useTranslations('social.dock');
+  const snapshot = useLobby((s) => s.snapshot);
+  const setToast = useLobby((s) => s.setToast);
+  const myRoomCode = snapshot?.room.code ?? null;
+  const [sending, setSending] = React.useState(false);
+
+  function invite() {
+    if (sending) return;
+    setSending(true);
+    getSocket().emit('invite:send', { toUserId: friend.userId }, (ack) => {
+      setSending(false);
+      if (ack.ok) {
+        setToast({
+          id: `invite-${ack.data.inviteId}`,
+          kind: 'success',
+          text: t('inviteSent', { nickname: friend.nickname }),
+        });
+      } else {
+        setToast({
+          id: `invite-err-${Date.now()}`,
+          kind: 'error',
+          text: ack.message ?? t('inviteError'),
+        });
+      }
+    });
+  }
 
   const subtitle = (() => {
     if (friend.status === 'in_lobby' || friend.status === 'in_game') {
@@ -67,16 +95,21 @@ export function FriendRow({ friend }: { friend: FriendState }) {
       );
     }
     if (friend.status === 'online' || friend.status === 'idle') {
-      // PR3 will wire this up; for now it's a non-interactive teaser so users
-      // discover the feature is coming.
+      const canInvite = !!myRoomCode;
       return (
         <button
           type="button"
-          disabled
-          title={t('inviteTooltipSoon')}
-          className="rounded-md border border-white/10 bg-transparent px-2.5 py-1 text-xs font-medium text-[color:var(--color-fg-muted)] opacity-60"
+          onClick={invite}
+          disabled={!canInvite || sending}
+          title={canInvite ? t('inviteTooltip', { nickname: friend.nickname }) : t('inviteTooltipNoLobby')}
+          className={cn(
+            'rounded-md border border-white/10 px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary-500)]',
+            canInvite
+              ? 'text-[color:var(--color-fg)] hover:bg-white/[0.06]'
+              : 'text-[color:var(--color-fg-muted)] opacity-60',
+          )}
         >
-          {t('actionInvite')}
+          {sending ? '…' : t('actionInvite')}
         </button>
       );
     }

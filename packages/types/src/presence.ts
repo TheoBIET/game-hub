@@ -32,3 +32,20 @@ export interface PresenceSnapshot {
 export interface GlobalPresenceUpdate {
   count: number;
 }
+
+/**
+ * Ephemeral invitation pushed to a friend's open socket. Not persisted — if
+ * the friend isn't online at `invite:send` time, the server rejects with
+ * `FRIEND_OFFLINE`. TTL is 60 s from creation; the server emits
+ * `invite:expired` to the recipient when it lapses.
+ */
+export interface Invite {
+  inviteId: string;
+  fromUserId: string;
+  fromNickname: string;
+  fromSlug: string;
+  fromAvatar: string | null;
+  roomCode: string;
+  gameType: string;
+  expiresAt: number;
+}

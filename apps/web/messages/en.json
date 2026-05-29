@@ -60,9 +60,18 @@
       "statusIdle": "Idle",
       "actionJoin": "Join",
       "actionInvite": "Invite",
-      "inviteTooltipSoon": "Soon — direct invites",
+      "inviteTooltip": "Invite {nickname} to your lobby",
+      "inviteTooltipNoLobby": "Create a lobby first to invite",
+      "inviteSent": "Invitation sent to {nickname}",
+      "inviteError": "Could not send the invitation",
       "badgePrivate": "Private",
       "badgeInGame": "In game"
+    },
+    "invite": {
+      "invitesYou": "is inviting you to play {game}",
+      "accept": "Accept",
+      "decline": "Decline",
+      "expiresIn": "Expires in {seconds}s"
     }
   },
   "lobby": {

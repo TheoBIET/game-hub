@@ -60,9 +60,18 @@
       "statusIdle": "Inactif",
       "actionJoin": "Rejoindre",
       "actionInvite": "Inviter",
-      "inviteTooltipSoon": "Bientôt — invitations directes",
+      "inviteTooltip": "Inviter {nickname} dans ton lobby",
+      "inviteTooltipNoLobby": "Crée d'abord un lobby pour pouvoir inviter",
+      "inviteSent": "Invitation envoyée à {nickname}",
+      "inviteError": "Impossible d'envoyer l'invitation",
       "badgePrivate": "Privé",
       "badgeInGame": "En partie"
+    },
+    "invite": {
+      "invitesYou": "t'invite à jouer à {game}",
+      "accept": "Accepter",
+      "decline": "Refuser",
+      "expiresIn": "Expire dans {seconds}s"
     }
   },
   "lobby": {

@@ -27,6 +27,7 @@ import {
   resetGame,
 } from '../room-manager.js';
 import { checkAccess } from '../lobby/access.js';
+import { broadcastLobbyState } from '../lobby/broadcast.js';
 import { areMutualFriends } from '../presence/friends.js';
 import {
   onAccessModeChanged,
@@ -478,17 +479,5 @@ export async function removePlayer(
   }
 }
 
-export function broadcastLobbyState(io: Io, code: string): void {
-  const room = getRoom(code);
-  if (!room) return;
-  const sockets = io.sockets.adapter.rooms.get(roomChannel(code));
-  if (!sockets) return;
-  for (const sid of sockets) {
-    const s = io.sockets.sockets.get(sid);
-    if (!s) continue;
-    const pid = s.data.playerId;
-    if (!pid) continue;
-    s.emit('lobby:state', buildSnapshotFor(room, pid));
-  }
-}
+export { broadcastLobbyState } from '../lobby/broadcast.js';
 

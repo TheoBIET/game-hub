@@ -20,6 +20,7 @@ import type {
 import type {
   FriendState,
   GlobalPresenceUpdate,
+  Invite,
   LobbyAccessMode,
   PresenceSnapshot,
 } from './presence.js';
@@ -108,6 +109,21 @@ export type ClientToServerEvents = {
   'presence:setIdle': (input: { idle: boolean }, ack: AckCb) => void;
   /** Host-only: change the lobby access mode. */
   'lobby:setAccessMode': (input: { mode: LobbyAccessMode }, ack: AckCb) => void;
+  /**
+   * Ephemeral invite from the caller's current lobby to a mutual friend.
+   * Server validates: friend mutuality, target online, caller in a room,
+   * 30s cooldown per (from, to) pair. Returns the minted `inviteId`.
+   */
+  'invite:send': (
+    input: { toUserId: string },
+    ack: AckCb<{ inviteId: string }>,
+  ) => void;
+  /** Consume an invite; on success, the server joins the user into the room (bypassing ACL). */
+  'invite:accept': (
+    input: { inviteId: string },
+    ack: AckCb<{ roomCode: string }>,
+  ) => void;
+  'invite:decline': (input: { inviteId: string }, ack: AckCb) => void;
 };
 
 export type ServerToClientEvents = {
@@ -127,6 +143,10 @@ export type ServerToClientEvents = {
   'presence:global': (update: GlobalPresenceUpdate) => void;
   /** Broadcast to all room members when the host changes access mode. */
   'lobby:accessChanged': (payload: { roomCode: string; mode: LobbyAccessMode }) => void;
+  /** A friend just sent the user an invitation (push to the recipient only). */
+  'invite:incoming': (invite: Invite) => void;
+  /** The invitation lapsed before being acted on. Recipient should dismiss the toast. */
+  'invite:expired': (payload: { inviteId: string }) => void;
   'error': (payload: { code: string; message: string; retryable?: boolean }) => void;
 };
 

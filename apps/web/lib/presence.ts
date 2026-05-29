@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import type { FriendState } from '@tabswitch/types';
+import type { FriendState, Invite } from '@tabswitch/types';
 import { getSocket } from './socket';
 
 /**
@@ -18,6 +18,8 @@ export interface PresenceState {
   ready: boolean;
   globalOnline: number;
   friends: Record<string, FriendState>;
+  /** Incoming invitations currently displayed (TTL-driven dismissal). */
+  incomingInvites: Invite[];
   /** Reset internal state (used on sign-out or hot reload). */
   reset: () => void;
   /** Apply the initial snapshot returned by `presence:hello`. */
@@ -25,13 +27,16 @@ export interface PresenceState {
   upsertFriend: (f: FriendState) => void;
   removeFriend: (userId: string) => void;
   setGlobal: (count: number) => void;
+  addInvite: (invite: Invite) => void;
+  removeInvite: (inviteId: string) => void;
 }
 
 export const usePresence = create<PresenceState>((set) => ({
   ready: false,
   globalOnline: 0,
   friends: {},
-  reset: () => set({ ready: false, globalOnline: 0, friends: {} }),
+  incomingInvites: [],
+  reset: () => set({ ready: false, globalOnline: 0, friends: {}, incomingInvites: [] }),
   applySnapshot: ({ globalOnline, friends }) => {
     const map: Record<string, FriendState> = {};
     for (const f of friends) map[f.userId] = f;
@@ -47,6 +52,14 @@ export const usePresence = create<PresenceState>((set) => ({
       return { friends: next };
     }),
   setGlobal: (count) => set({ globalOnline: count }),
+  addInvite: (invite) =>
+    set((s) => {
+      // De-dupe by inviteId in case the server retries the push.
+      if (s.incomingInvites.some((i) => i.inviteId === invite.inviteId)) return s;
+      return { incomingInvites: [...s.incomingInvites, invite] };
+    }),
+  removeInvite: (inviteId) =>
+    set((s) => ({ incomingInvites: s.incomingInvites.filter((i) => i.inviteId !== inviteId) })),
 }));
 
 /**
@@ -66,9 +79,18 @@ export function subscribePresence(isAuthenticated: boolean): () => void {
     usePresence.getState().removeFriend(payload.userId);
   };
 
+  const onIncomingInvite = (invite: Invite) => {
+    usePresence.getState().addInvite(invite);
+  };
+  const onInviteExpired = (payload: { inviteId: string }) => {
+    usePresence.getState().removeInvite(payload.inviteId);
+  };
+
   socket.on('presence:global', onGlobal);
   socket.on('presence:friend', onFriend);
   socket.on('presence:friend:offline', onFriendOffline);
+  socket.on('invite:incoming', onIncomingInvite);
+  socket.on('invite:expired', onInviteExpired);
 
   function sayHello(): void {
     socket.emit('presence:hello', {}, (ack) => {
@@ -116,6 +138,8 @@ export function subscribePresence(isAuthenticated: boolean): () => void {
     socket.off('presence:global', onGlobal);
     socket.off('presence:friend', onFriend);
     socket.off('presence:friend:offline', onFriendOffline);
+    socket.off('invite:incoming', onIncomingInvite);
+    socket.off('invite:expired', onInviteExpired);
     socket.off('connect', sayHello);
     document.removeEventListener('visibilitychange', onVisibility);
     for (const ev of idleEvents) window.removeEventListener(ev, bumpIdle);
