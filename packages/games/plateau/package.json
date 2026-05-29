@@ -1,0 +1,27 @@
+{
+  "name": "@tabswitch/plateau",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "echo skip"
+  },
+  "dependencies": {
+    "@tabswitch/types": "workspace:*",
+    "zod": "^3.24.1",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@tabswitch/config": "workspace:*",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
