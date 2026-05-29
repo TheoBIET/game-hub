@@ -20,6 +20,7 @@
     "@tabswitch/connect4": "workspace:*",
     "@tabswitch/db": "workspace:*",
     "@tabswitch/gif-battle": "workspace:*",
+    "@tabswitch/plateau": "workspace:*",
     "@tabswitch/rps": "workspace:*",
     "@tabswitch/tictactoe": "workspace:*",
     "@tabswitch/types": "workspace:*",

@@ -12,11 +12,12 @@ import { gameLabel } from '@/lib/constants';
 import { TicTacToeGame } from '@/components/games/tictactoe/TicTacToeGame';
 import { Connect4Game } from '@/components/games/connect4/Connect4Game';
 import { RpsGame } from '@/components/games/rps/RpsGame';
+import { PlateauGame } from '@/components/games/plateau/PlateauGame';
 import { PlaceholderGame } from '@/components/games/PlaceholderGame';
 import { GameSettingsPanel } from '@/components/games/GameSettingsPanel';
 import { MatchScoreChip } from '@/components/games/MatchScoreChip';
 
-type SupportedGame = 'gif-battle' | 'tictactoe' | 'connect4' | 'rps';
+type SupportedGame = 'gif-battle' | 'tictactoe' | 'connect4' | 'rps' | 'plateau';
 
 export function GameRoomShell({
   gameType,
@@ -524,5 +525,6 @@ function GameView({ gameType, snapshot }: { gameType: SupportedGame; snapshot: L
   if (gameType === 'tictactoe') return <TicTacToeGame snapshot={snapshot} />;
   if (gameType === 'connect4') return <Connect4Game snapshot={snapshot} />;
   if (gameType === 'rps') return <RpsGame snapshot={snapshot} />;
+  if (gameType === 'plateau') return <PlateauGame snapshot={snapshot} />;
   return <PlaceholderGame gameType="gif-battle" />;
 }

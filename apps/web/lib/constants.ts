@@ -41,6 +41,13 @@ export const GAME_LABELS: Record<string, GameMeta> = {
     maxPlayers: 2,
     bestOfOptions: BEST_OF_OPTIONS,
   },
+  plateau: {
+    name: 'Plateau Party',
+    emoji: '🎲',
+    minPlayers: 2,
+    maxPlayers: 8,
+    bestOfOptions: [],
+  },
 };
 
 export function gameLabel(gameType: string): GameMeta {
