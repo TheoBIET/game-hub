@@ -3,6 +3,7 @@ import {
 } from './constants.js';
 import { computeRanks, tallyRound } from './scoring.js';
 import { ALL_SEED_THEMES, pickRandomTheme } from './themes.js';
+import type { SeedTheme } from './themes.js';
 import type {
   AnonymousSubmission,
   FinalScoreEntry,
@@ -21,7 +22,7 @@ export interface FsmError {
 /** Initialize a fresh first round (idempotent if currentRound exists with same number). */
 export function transitionToRoundIntro(
   state: GifBattleState,
-  themePool: import('./themes.js').SeedTheme[],
+  themePool: SeedTheme[],
 ): GifBattleState {
   const usedIds = new Set(state.history.map((h) => h.themeId));
   const localePool =
@@ -139,7 +140,7 @@ export function tallyAndTransitionToResults(
 
 export function transitionAfterResults(
   state: GifBattleState,
-  themePool: import('./themes.js').SeedTheme[],
+  themePool: SeedTheme[],
 ):
   | { kind: 'NEXT_ROUND'; state: GifBattleState }
   | { kind: 'GAME_END'; state: GifBattleState; payload: GameEndedPayload } {

@@ -85,7 +85,8 @@ export async function loadThemePool(locale: Locale): Promise<SeedTheme[]> {
   try {
     const community = await communityLoader(locale);
     return [...base, ...community];
-  } catch {
+  } catch (err) {
+    console.warn('[gif-battle] communityLoader failed, falling back to seed:', err);
     return base;
   }
 }

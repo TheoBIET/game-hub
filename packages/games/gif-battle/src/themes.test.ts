@@ -32,6 +32,12 @@ describe('loadThemePool', () => {
     const pool = await loadThemePool('fr');
     expect(pool.length).toBeGreaterThan(0);
   });
+
+  it("filtre correctement la locale 'en'", async () => {
+    const pool = await loadThemePool('en');
+    expect(pool.length).toBe(ALL_SEED_THEMES.filter((t) => t.locale === 'en').length);
+    expect(pool.every((t) => t.locale === 'en')).toBe(true);
+  });
 });
 
 describe('pickRandomTheme', () => {
