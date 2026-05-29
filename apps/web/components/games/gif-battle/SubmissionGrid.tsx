@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   GIF_BATTLE_EVENTS,
   REACTION_EMOJIS,
@@ -26,6 +27,7 @@ export function SubmissionGrid({
   secondsLeft: number;
   reactions: ReactionFlash[];
 }) {
+  const [pendingVote, setPendingVote] = useState(false);
   const round = view.currentRound;
   if (!round) return null;
   const voting = view.status === 'ROUND_VOTING';
@@ -34,9 +36,15 @@ export function SubmissionGrid({
   async function vote(submissionId: string) {
     if (!voting) return;
     if (submissionId === view.you.mySubmissionId) return;
-    const event = myVote === submissionId ? GIF_BATTLE_EVENTS.RoundUnvote : GIF_BATTLE_EVENTS.RoundVote;
-    const ack = await gameAction(getSocket(), event, { submissionId });
-    if (!ack.ok) alert(ack.message);
+    if (pendingVote) return;
+    setPendingVote(true);
+    try {
+      const event = myVote === submissionId ? GIF_BATTLE_EVENTS.RoundUnvote : GIF_BATTLE_EVENTS.RoundVote;
+      const ack = await gameAction(getSocket(), event, { submissionId });
+      if (!ack.ok) alert(ack.message);
+    } finally {
+      setPendingVote(false);
+    }
   }
 
   async function react(submissionId: string, emoji: string) {
@@ -56,7 +64,7 @@ export function SubmissionGrid({
           return (
             <div
               key={sub.id}
-              className={`relative overflow-hidden rounded-xl border transition ${
+              className={`relative overflow-hidden rounded-xl border transition animate-rise ${
                 isVoted ? 'border-emerald-400 ring-2 ring-emerald-400' : 'border-white/10'
               }`}
               style={{ animationDelay: `${i * 120}ms` }}
@@ -64,7 +72,7 @@ export function SubmissionGrid({
               <button
                 type="button"
                 onClick={() => vote(sub.id)}
-                disabled={!voting || isMine}
+                disabled={!voting || isMine || pendingVote}
                 className="block w-full disabled:cursor-default"
                 title={isMine ? 'Ton GIF' : voting ? (isVoted ? 'Retirer le vote' : 'Voter') : undefined}
               >
