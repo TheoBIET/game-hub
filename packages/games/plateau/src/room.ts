@@ -95,6 +95,17 @@ export class PlateauRoom implements GameRoom<PlateauClientView> {
   }
 
   getStateFor(playerId: string): PlateauClientView {
+    if (!this.state) {
+      return {
+        board: [],
+        players: [],
+        phase: 'LOBBY',
+        turn: { number: 0, playerOrder: [], activeIndex: 0, dice: {}, movedPlayers: [] },
+        pendingEvent: null,
+        eventLog: [],
+        you: { playerId, isActivePlayer: false },
+      };
+    }
     return buildClientViewFor(this.state, playerId);
   }
 
