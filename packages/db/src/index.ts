@@ -11,6 +11,7 @@ export type {
   Follow,
   GameOutcome,
   UserSettings,
+  GifBattleSentence,
   Locale,
   Theme,
   Prisma,

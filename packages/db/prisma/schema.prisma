@@ -31,7 +31,8 @@ model User {
   gameSessions GameSession[]
   follows      Follow[]   @relation("Follower")
   followers    Follow[]   @relation("Following")
-  settings     UserSettings?
+  settings           UserSettings?
+  gifBattleSentences GifBattleSentence[]
 
   @@map("users")
 }
@@ -180,4 +181,20 @@ model UserSettings {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// ============ GIF Battle ============
+
+model GifBattleSentence {
+  id         String   @id @default(uuid()) @db.Uuid
+  sentenceFr String   @db.VarChar(140)
+  sentenceEn String   @db.VarChar(140)
+  isApproved Boolean  @default(false)
+  authorId   String?
+  createdAt  DateTime @default(now())
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([isApproved], map: "gif_battle_sentences_approved_idx")
+  @@map("gif_battle_sentences")
 }
