@@ -2,7 +2,7 @@ import {
   DEFAULTS,
 } from './constants.js';
 import { computeRanks, tallyRound } from './scoring.js';
-import { pickRandomTheme } from './themes.js';
+import { ALL_SEED_THEMES, pickRandomTheme } from './themes.js';
 import type {
   AnonymousSubmission,
   FinalScoreEntry,
@@ -19,12 +19,16 @@ export interface FsmError {
 }
 
 /** Initialize a fresh first round (idempotent if currentRound exists with same number). */
-export function transitionToRoundIntro(state: GifBattleState): GifBattleState {
-  const usedThemes = new Set(state.history.map((h) => h.themeText));
-  let chosen = pickRandomTheme(state.settings.locale, new Set());
-  for (let i = 0; i < 5 && usedThemes.has(chosen.text); i++) {
-    chosen = pickRandomTheme(state.settings.locale, new Set());
-  }
+export function transitionToRoundIntro(
+  state: GifBattleState,
+  themePool: import('./themes.js').SeedTheme[],
+): GifBattleState {
+  const usedIds = new Set(state.history.map((h) => h.themeId));
+  const localePool =
+    themePool.length > 0
+      ? themePool
+      : ALL_SEED_THEMES.filter((t) => t.locale === state.settings.locale);
+  const chosen = pickRandomTheme(localePool, usedIds);
 
   const number = (state.currentRound?.number ?? state.history.length) + 1;
   const now = Date.now();
@@ -135,15 +139,17 @@ export function tallyAndTransitionToResults(
 
 export function transitionAfterResults(
   state: GifBattleState,
+  themePool: import('./themes.js').SeedTheme[],
 ):
   | { kind: 'NEXT_ROUND'; state: GifBattleState }
   | { kind: 'GAME_END'; state: GifBattleState; payload: GameEndedPayload } {
   if (!state.currentRound) {
-    return { kind: 'NEXT_ROUND', state: transitionToRoundIntro(state) };
+    return { kind: 'NEXT_ROUND', state: transitionToRoundIntro(state, themePool) };
   }
   const finished = state.currentRound;
   state.history.push({
     number: finished.number,
+    themeId: finished.themeId,
     themeText: finished.themeText,
     winnerSubmissionIds: finished.winnerSubmissionIds,
   });
@@ -151,7 +157,7 @@ export function transitionAfterResults(
   if (finished.number >= state.settings.rounds) {
     return { kind: 'GAME_END', state: transitionToGameEnd(state), payload: buildGameEnded(state) };
   }
-  return { kind: 'NEXT_ROUND', state: transitionToRoundIntro(state) };
+  return { kind: 'NEXT_ROUND', state: transitionToRoundIntro(state, themePool) };
 }
 
 export function transitionToGameEnd(state: GifBattleState): GifBattleState {

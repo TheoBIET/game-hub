@@ -4,7 +4,7 @@ export interface SeedTheme {
   id: string;
   locale: Locale;
   text: string;
-  category: 'tech' | 'work' | 'family' | 'internet' | 'absurd' | 'meta';
+  category: 'tech' | 'work' | 'family' | 'internet' | 'absurd' | 'meta' | 'community';
 }
 
 export const SEED_THEMES_FR: SeedTheme[] = [
@@ -65,8 +65,34 @@ export const SEED_THEMES_EN: SeedTheme[] = [
 
 export const ALL_SEED_THEMES: SeedTheme[] = [...SEED_THEMES_FR, ...SEED_THEMES_EN];
 
-export function pickRandomTheme(locale: Locale, alreadyUsed: ReadonlySet<string>): SeedTheme {
-  const pool = ALL_SEED_THEMES.filter((t) => t.locale === locale && !alreadyUsed.has(t.id));
-  const candidates = pool.length > 0 ? pool : ALL_SEED_THEMES.filter((t) => t.locale === locale);
+/** Loader optionnel injecté par le serveur pour charger les phrases de la DB. */
+export type CommunityPhraseLoader = (locale: Locale) => Promise<SeedTheme[]>;
+
+let communityLoader: CommunityPhraseLoader | null = null;
+
+/** Branché une fois au boot serveur. `null` désactive (tests / dev sans DB). */
+export function setCommunityPhraseLoader(fn: CommunityPhraseLoader | null): void {
+  communityLoader = fn;
+}
+
+/**
+ * Pool de thèmes pour une locale : seed statique + phrases communautaires
+ * (si un loader est branché). Tout échec du loader retombe sur le seed seul.
+ */
+export async function loadThemePool(locale: Locale): Promise<SeedTheme[]> {
+  const base = ALL_SEED_THEMES.filter((t) => t.locale === locale);
+  if (!communityLoader) return base;
+  try {
+    const community = await communityLoader(locale);
+    return [...base, ...community];
+  } catch {
+    return base;
+  }
+}
+
+/** Pioche un thème dans `pool`, en évitant `alreadyUsed` tant que possible. */
+export function pickRandomTheme(pool: SeedTheme[], alreadyUsed: ReadonlySet<string>): SeedTheme {
+  const fresh = pool.filter((t) => !alreadyUsed.has(t.id));
+  const candidates = fresh.length > 0 ? fresh : pool;
   return candidates[Math.floor(Math.random() * candidates.length)]!;
 }

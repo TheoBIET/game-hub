@@ -76,6 +76,7 @@ export interface GifBattleState {
   currentRound?: Round;
   history: Array<{
     number: number;
+    themeId: ThemeId;
     themeText: string;
     winnerSubmissionIds: SubmissionId[];
   }>;

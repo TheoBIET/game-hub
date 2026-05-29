@@ -1,5 +1,7 @@
 import { ulid } from 'ulid';
 import { deriveOutcomes } from './outcomes.js';
+import { loadThemePool } from './themes.js';
+import type { SeedTheme } from './themes.js';
 import type {
   GameContext,
   GameHandlerResult,
@@ -50,6 +52,7 @@ export class GifBattleRoom implements GameRoom<GifBattleClientView> {
   private state: GifBattleState;
   private participations = new Map<string, number>();
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private themePool: SeedTheme[] = [];
 
   constructor(private readonly ctx: GameContext) {
     this.roomCode = ctx.roomCode;
@@ -77,9 +80,10 @@ export class GifBattleRoom implements GameRoom<GifBattleClientView> {
     this.ctx.broadcastState();
   }
 
-  onStart(): void {
+  async onStart(): Promise<void> {
     if (this.state.status !== 'WAITING') return;
     this.syncPlayers();
+    this.themePool = await loadThemePool(this.state.settings.locale);
     this.startRound();
   }
 
@@ -257,7 +261,7 @@ export class GifBattleRoom implements GameRoom<GifBattleClientView> {
   // ============ FSM driver ============
 
   private startRound(): void {
-    transitionToRoundIntro(this.state);
+    transitionToRoundIntro(this.state, this.themePool);
     const r = this.state.currentRound!;
     this.ctx.broadcast(GIF_BATTLE_SERVER_EVENTS.RoundStarted, {
       number: r.number,
@@ -286,7 +290,7 @@ export class GifBattleRoom implements GameRoom<GifBattleClientView> {
       this.participations.set(sub.playerId, (this.participations.get(sub.playerId) ?? 0) + 1);
     }
     if (this.state.currentRound.submissions.length === 0) {
-      const out = transitionAfterResults(this.state);
+      const out = transitionAfterResults(this.state, this.themePool);
       this.ctx.broadcastState();
       if (out.kind === 'GAME_END') {
         this.ctx.broadcast(GIF_BATTLE_SERVER_EVENTS.GameEnded, out.payload);
@@ -354,7 +358,7 @@ export class GifBattleRoom implements GameRoom<GifBattleClientView> {
 
   private advanceFromResults(): void {
     if (this.state.status !== 'ROUND_RESULTS') return;
-    const out = transitionAfterResults(this.state);
+    const out = transitionAfterResults(this.state, this.themePool);
     if (out.kind === 'GAME_END') {
       this.ctx.broadcast(GIF_BATTLE_SERVER_EVENTS.GameEnded, out.payload);
       this.ctx.broadcastState();
