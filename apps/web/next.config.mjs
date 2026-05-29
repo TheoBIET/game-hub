@@ -5,6 +5,12 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Avatar upload sends a base64 data URI through a server action. With an
+    // 8 MB raw cap the data URI lands around ~10.7 MB, so the default 1 MB
+    // body limit rejects the request with a 500 before our action runs.
+    serverActions: { bodySizeLimit: '12mb' },
+  },
   transpilePackages: [
     '@tabswitch/connect4',
     '@tabswitch/db',
