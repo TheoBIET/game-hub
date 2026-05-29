@@ -5,7 +5,7 @@ import { CreateRoomForm } from '@/components/games/CreateRoomForm';
 import { HubNav } from '@/components/hub/HubNav';
 import { gameLabel } from '@/lib/constants';
 
-const SUPPORTED_GAMES = ['gif-battle', 'tictactoe', 'connect4', 'rps'] as const;
+const SUPPORTED_GAMES = ['gif-battle', 'tictactoe', 'connect4', 'rps', 'plateau'] as const;
 type SupportedGame = (typeof SUPPORTED_GAMES)[number];
 
 export default async function GameLanding({

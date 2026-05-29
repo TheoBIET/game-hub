@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { getDb } from '@tabswitch/db';
 import { GameRoomShell } from '@/components/games/GameRoomShell';
 
-const SUPPORTED_GAMES = ['gif-battle', 'tictactoe', 'connect4', 'rps'] as const;
+const SUPPORTED_GAMES = ['gif-battle', 'tictactoe', 'connect4', 'rps', 'plateau'] as const;
 type SupportedGame = (typeof SUPPORTED_GAMES)[number];
 
 export default async function GameRoomPage({

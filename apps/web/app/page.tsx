@@ -60,6 +60,18 @@ const GAMES = [
     duration: '~1 min',
     emoji: '✊',
   },
+  {
+    gameType: 'plateau',
+    title: 'Plateau Party',
+    tagline: 'Lancez les dés, traversez le plateau, remportez les défis !',
+    status: 'live' as const,
+    accentFrom: '#a855f7',
+    accentTo: '#ec4899',
+    minPlayers: 2,
+    maxPlayers: 8,
+    duration: '~20 min',
+    emoji: '🎲',
+  },
 ];
 
 export default async function HubLanding() {
