@@ -81,7 +81,7 @@ export function GifPicker({ view, secondsLeft }: { view: GifBattleClientView; se
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {results.map((g) => {
-            const isMine = view.you.submittedThisRound && submittingId === null;
+            const isMine = view.you.submittedThisRound;
             return (
               <button
                 key={g.id}

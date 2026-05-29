@@ -76,8 +76,12 @@ export function SubmissionGrid({
                 className="block w-full disabled:cursor-default"
                 title={isMine ? 'Ton GIF' : voting ? (isVoted ? 'Retirer le vote' : 'Voter') : undefined}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={sub.gifUrl || sub.previewUrl} alt="gif" className="h-48 w-full object-contain bg-black/40" />
+                {sub.gifUrl || sub.previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={sub.gifUrl || sub.previewUrl} alt="gif" className="h-48 w-full object-contain bg-black/40" />
+                ) : (
+                  <div className="flex h-48 w-full items-center justify-center bg-black/40 text-4xl">🎬</div>
+                )}
               </button>
               {isMine && (
                 <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] uppercase tracking-wider">

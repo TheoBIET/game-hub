@@ -36,6 +36,16 @@ export function GifBattleGame({ snapshot }: { snapshot: LobbySnapshot }) {
     case 'ROUND_PICKING':
       return <GifPicker view={view} secondsLeft={secondsLeft} />;
     case 'ROUND_PRE_REVEAL':
+      return (
+        <Card>
+          <div className="py-10 text-center">
+            <div className="text-xs uppercase tracking-[0.3em] text-[color:var(--color-fg-muted)]">
+              Révélation imminente…
+            </div>
+            <p className="font-display mt-3 text-2xl font-bold">{round?.themeText}</p>
+          </div>
+        </Card>
+      );
     case 'ROUND_REVEALING':
     case 'ROUND_VOTING':
       return <SubmissionGrid view={view} secondsLeft={secondsLeft} reactions={reactions} />;
@@ -51,6 +61,8 @@ export function GifBattleGame({ snapshot }: { snapshot: LobbySnapshot }) {
       ) : (
         <Card><p className="text-center text-sm">Fin de partie…</p></Card>
       );
+    case 'WAITING':
+      return <Card><p className="text-center text-sm">Préparation de la partie…</p></Card>;
     default:
       return <Card><p className="text-center text-sm">En attente…</p></Card>;
   }
