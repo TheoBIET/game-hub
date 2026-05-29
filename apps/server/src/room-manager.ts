@@ -93,6 +93,7 @@ export function createRoom(io: Io, definition: GameDefinition, hostPlayer: Lobby
     status: 'LOBBY',
     players: [hostPlayer],
     spectators: [],
+    accessMode: 'public',
   };
   // Build the game with a context that closes over `lobby` / `io`.
   const ctx: GameContext = buildGameContext(io, code, () => lobby);

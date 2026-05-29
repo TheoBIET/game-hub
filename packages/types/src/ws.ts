@@ -20,6 +20,7 @@ import type {
 import type {
   FriendState,
   GlobalPresenceUpdate,
+  LobbyAccessMode,
   PresenceSnapshot,
 } from './presence.js';
 
@@ -105,6 +106,8 @@ export type ClientToServerEvents = {
   'presence:hello': (_: Record<string, never>, ack: AckCb<PresenceSnapshot>) => void;
   /** Idle toggle, emitted by the web client from the Page Visibility API. */
   'presence:setIdle': (input: { idle: boolean }, ack: AckCb) => void;
+  /** Host-only: change the lobby access mode. */
+  'lobby:setAccessMode': (input: { mode: LobbyAccessMode }, ack: AckCb) => void;
 };
 
 export type ServerToClientEvents = {
@@ -122,6 +125,8 @@ export type ServerToClientEvents = {
   /** A friend has gone offline (no remaining sockets after the grace window). */
   'presence:friend:offline': (payload: { userId: string }) => void;
   'presence:global': (update: GlobalPresenceUpdate) => void;
+  /** Broadcast to all room members when the host changes access mode. */
+  'lobby:accessChanged': (payload: { roomCode: string; mode: LobbyAccessMode }) => void;
   'error': (payload: { code: string; message: string; retryable?: boolean }) => void;
 };
 

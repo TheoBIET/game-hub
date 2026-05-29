@@ -26,6 +26,20 @@ import {
   publicPlayerOf,
   resetGame,
 } from '../room-manager.js';
+import { checkAccess } from '../lobby/access.js';
+import { areMutualFriends } from '../presence/friends.js';
+import {
+  onAccessModeChanged,
+  onEnterLobby,
+  onLeaveLobby,
+  onLobbyStart,
+  syncToLobbyStatus,
+} from '../presence/lobby-bridge.js';
+import { z } from 'zod';
+
+const SetAccessModeSchema = z.object({
+  mode: z.enum(['public', 'friends', 'private']),
+});
 
 type TSocket = Socket<
   ClientToServerEvents,
@@ -100,6 +114,13 @@ export function registerLobbyHandlers(io: Io, socket: TSocket): void {
       ack(ackOk({ code: room.lobby.code, playerId: host.id }));
       room.game.onJoin(host.id);
       socket.emit('lobby:state', buildSnapshotFor(room, host.id));
+      if (socket.data.userId) {
+        void onEnterLobby(
+          io,
+          { userId: socket.data.userId, nickname: parsed.data.nickname },
+          { roomCode: room.lobby.code, gameType: definition.gameType, accessMode: room.lobby.accessMode },
+        );
+      }
       log.info(
         { code: room.lobby.code, playerId: host.id, gameType: definition.gameType },
         'room created',
@@ -148,8 +169,33 @@ export function registerLobbyHandlers(io: Io, socket: TSocket): void {
         await socket.join(roomChannel(room.lobby.code));
         ack(ackOk({ playerId }));
         broadcastLobbyState(io, room.lobby.code);
+        if (socket.data.userId) {
+          const status = room.lobby.status === 'PLAYING' ? 'in_game' : 'in_lobby';
+          void syncToLobbyStatus(
+            io,
+            { userId: socket.data.userId, nickname: parsed.data.nickname },
+            status,
+            { roomCode: room.lobby.code, gameType: room.lobby.gameType, accessMode: room.lobby.accessMode },
+          );
+        }
         return;
       }
+
+      // ACL gate — skipped for re-joins (above) to avoid kicking a player out
+      // if the host swaps the access mode while they're already inside.
+      const hostUserId = room.lobby.players.find((p) => p.id === room.lobby.hostId)?.userId;
+      const joinerUserId = socket.data.userId;
+      const isMutualFriend =
+        room.lobby.accessMode === 'friends' && joinerUserId && hostUserId
+          ? await areMutualFriends(joinerUserId, hostUserId)
+          : false;
+      const access = checkAccess({
+        accessMode: room.lobby.accessMode,
+        hostUserId,
+        joinerUserId,
+        isMutualFriend,
+      });
+      if (!access.ok) return ack(ackErr(access.code, access.message));
 
       const isPlaying = room.lobby.status === 'PLAYING' || room.lobby.status === 'ENDED';
       const wantsSpec = asSpec || isPlaying;
@@ -177,6 +223,13 @@ export function registerLobbyHandlers(io: Io, socket: TSocket): void {
         io.to(roomChannel(room.lobby.code)).emit('lobby:player:joined', publicPlayerOf(p));
         room.game.onJoin(playerId);
         broadcastLobbyState(io, room.lobby.code);
+        if (socket.data.userId) {
+          void onEnterLobby(
+            io,
+            { userId: socket.data.userId, nickname: parsed.data.nickname },
+            { roomCode: room.lobby.code, gameType: room.lobby.gameType, accessMode: room.lobby.accessMode },
+          );
+        }
         return;
       }
 
@@ -206,6 +259,13 @@ export function registerLobbyHandlers(io: Io, socket: TSocket): void {
       io.to(roomChannel(room.lobby.code)).emit('lobby:player:joined', publicPlayerOf(player));
       room.game.onJoin(playerId);
       broadcastLobbyState(io, room.lobby.code);
+      if (socket.data.userId) {
+        void onEnterLobby(
+          io,
+          { userId: socket.data.userId, nickname: parsed.data.nickname },
+          { roomCode: room.lobby.code, gameType: room.lobby.gameType, accessMode: room.lobby.accessMode },
+        );
+      }
       log.info(
         { code: room.lobby.code, playerId, gameType: room.lobby.gameType },
         'player joined',
@@ -282,6 +342,16 @@ export function registerLobbyHandlers(io: Io, socket: TSocket): void {
       log.error({ err, code }, 'game.onStart threw');
     }
     broadcastLobbyState(io, code);
+    const authedPlayers = room.lobby.players
+      .filter((p) => !!p.userId)
+      .map((p) => ({ userId: p.userId!, nickname: p.nickname }));
+    if (authedPlayers.length > 0) {
+      void onLobbyStart(io, authedPlayers, {
+        roomCode: code,
+        gameType: room.lobby.gameType,
+        accessMode: room.lobby.accessMode,
+      });
+    }
     ack(ackOk());
   });
 
@@ -304,6 +374,38 @@ export function registerLobbyHandlers(io: Io, socket: TSocket): void {
     room.lobby.rev++;
     io.to(roomChannel(code)).emit('lobby:host:changed', target.id);
     broadcastLobbyState(io, code);
+    ack(ackOk());
+  });
+
+  // ============ lobby:setAccessMode ============
+  socket.on('lobby:setAccessMode', async (input, ack) => {
+    const code = socket.data.roomCode;
+    if (!code) return ack(ackErr('NO_ROOM', 'Pas dans une room.'));
+    const parsed = SetAccessModeSchema.safeParse(input);
+    if (!parsed.success) return ack(ackErr('BAD_INPUT', 'Mode invalide.'));
+    const room = getRoom(code);
+    if (!room) return ack(ackErr('NO_ROOM', 'Room introuvable.'));
+    if (room.lobby.hostId !== socket.data.playerId) {
+      return ack(ackErr('NOT_HOST', 'Seul le host peut changer le mode.'));
+    }
+    if (room.lobby.accessMode === parsed.data.mode) return ack(ackOk());
+    room.lobby.accessMode = parsed.data.mode;
+    room.lobby.rev++;
+    io.to(roomChannel(code)).emit('lobby:accessChanged', {
+      roomCode: code,
+      mode: parsed.data.mode,
+    });
+    broadcastLobbyState(io, code);
+    const authedPlayers = room.lobby.players
+      .filter((p) => !!p.userId)
+      .map((p) => ({ userId: p.userId!, nickname: p.nickname }));
+    if (authedPlayers.length > 0) {
+      void onAccessModeChanged(io, authedPlayers, {
+        roomCode: code,
+        gameType: room.lobby.gameType,
+        accessMode: parsed.data.mode,
+      });
+    }
     ack(ackOk());
   });
 
@@ -345,9 +447,15 @@ export async function removePlayer(
   const room = getRoom(code);
   if (!room) return;
   const wasHost = room.lobby.hostId === playerId;
+  const leaver =
+    room.lobby.players.find((p) => p.id === playerId) ??
+    room.lobby.spectators.find((p) => p.id === playerId);
   room.lobby.players = room.lobby.players.filter((p) => p.id !== playerId);
   room.lobby.spectators = room.lobby.spectators.filter((p) => p.id !== playerId);
   room.lobby.rev++;
+  if (leaver?.userId) {
+    void onLeaveLobby(io, { userId: leaver.userId, nickname: leaver.nickname });
+  }
   if (wasHost && room.lobby.players.length > 0) {
     const sorted = [...room.lobby.players].sort((a, b) => a.joinedAt - b.joinedAt);
     const newHost = sorted[0]!;

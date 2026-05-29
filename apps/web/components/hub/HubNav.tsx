@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/hub/Logo';
 import { UserMenu } from '@/components/hub/UserMenu';
 import { OnlineCount } from '@/components/social/OnlineCount';
-import { SocialBootstrap } from '@/components/social/SocialBootstrap';
 
 export async function HubNav() {
   const session = await auth();
@@ -74,7 +73,6 @@ export async function HubNav() {
           )}
         </div>
       </nav>
-      <SocialBootstrap isAuthenticated={!!profile} />
     </header>
   );
 }

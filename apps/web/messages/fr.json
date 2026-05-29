@@ -49,6 +49,34 @@
   },
   "social": {
     "onlineTooltip": "Joueurs connectés en ce moment",
-    "onlineCount": "{count, plural, =0 {personne en ligne} one {# en ligne} other {# en ligne}}"
+    "onlineCount": "{count, plural, =0 {personne en ligne} one {# en ligne} other {# en ligne}}",
+    "dock": {
+      "panelTitle": "Amis",
+      "toggle": "{count, plural, =0 {Amis (aucun en ligne)} one {Amis (# en ligne)} other {Amis (# en ligne)}}",
+      "close": "Fermer",
+      "emptyTitle": "Personne en ligne",
+      "emptyHint": "Tes amis apparaîtront ici dès qu'ils se connectent.",
+      "statusOnline": "En ligne",
+      "statusIdle": "Inactif",
+      "actionJoin": "Rejoindre",
+      "actionInvite": "Inviter",
+      "inviteTooltipSoon": "Bientôt — invitations directes",
+      "badgePrivate": "Privé",
+      "badgeInGame": "En partie"
+    }
+  },
+  "lobby": {
+    "access": {
+      "label": "Mode d'accès au lobby",
+      "label_public": "Public",
+      "label_friends": "Amis",
+      "label_private": "Privé",
+      "tooltip": {
+        "public": "Toute personne avec le code peut rejoindre",
+        "friends": "Tes amis peuvent voir et rejoindre, le code marche aussi pour eux",
+        "private": "Sur invitation uniquement, même avec le code"
+      },
+      "error": "Impossible de changer le mode, réessaie."
+    }
   }
 }

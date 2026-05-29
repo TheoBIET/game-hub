@@ -49,6 +49,34 @@
   },
   "social": {
     "onlineTooltip": "Players currently online",
-    "onlineCount": "{count, plural, =0 {nobody online} one {# online} other {# online}}"
+    "onlineCount": "{count, plural, =0 {nobody online} one {# online} other {# online}}",
+    "dock": {
+      "panelTitle": "Friends",
+      "toggle": "{count, plural, =0 {Friends (none online)} one {Friends (# online)} other {Friends (# online)}}",
+      "close": "Close",
+      "emptyTitle": "Nobody online",
+      "emptyHint": "Your friends will appear here once they sign in.",
+      "statusOnline": "Online",
+      "statusIdle": "Idle",
+      "actionJoin": "Join",
+      "actionInvite": "Invite",
+      "inviteTooltipSoon": "Soon — direct invites",
+      "badgePrivate": "Private",
+      "badgeInGame": "In game"
+    }
+  },
+  "lobby": {
+    "access": {
+      "label": "Lobby access mode",
+      "label_public": "Public",
+      "label_friends": "Friends",
+      "label_private": "Private",
+      "tooltip": {
+        "public": "Anyone with the code can join",
+        "friends": "Your friends can see and join — the code still works for them",
+        "private": "Invitation only, even with the code"
+      },
+      "error": "Could not change the mode, try again."
+    }
   }
 }

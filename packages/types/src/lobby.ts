@@ -2,6 +2,7 @@
  * Generic lobby model. Everything in this file is game-agnostic.
  * Game-specific state lives inside each game's `GameRoom`.
  */
+import type { LobbyAccessMode } from './presence.js';
 
 export type RoomCode = string;
 export type PlayerId = string;
@@ -30,6 +31,14 @@ export interface LobbyRoom {
   status: RoomStatus;
   players: LobbyPlayer[];
   spectators: LobbyPlayer[];
+  /**
+   * Who can join via `lobby:join`:
+   *  - `public`  : anyone with the code (default, current behavior)
+   *  - `friends` : the joiner must be a mutual follower of the host
+   *  - `private` : only via an accepted invite (PR 3)
+   * Guests (no userId) are denied in `friends` and `private` modes.
+   */
+  accessMode: LobbyAccessMode;
 }
 
 /** Lightweight player shape we expose to clients (no joinedAt internals). */

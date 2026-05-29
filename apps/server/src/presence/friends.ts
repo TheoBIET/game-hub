@@ -87,3 +87,19 @@ async function loadMutualFriends(userId: string): Promise<MutualFriendInfo[]> {
 export function _clearFriendsCache(): void {
   cache.clear();
 }
+
+/**
+ * Cheap "are A and B mutual friends?" check. We can satisfy this from the
+ * cached friend list of A when present — that avoids hitting Prisma at all
+ * inside the lobby join hot path.
+ */
+export async function areMutualFriends(a: string, b: string): Promise<boolean> {
+  if (a === b) return false;
+  const cached = cache.get(a);
+  if (cached?.value) {
+    return cached.value.some((f) => f.userId === b);
+  }
+  // No cache — load full list (and populate cache as a side effect).
+  const list = await getMutualFriends(a);
+  return list.some((f) => f.userId === b);
+}

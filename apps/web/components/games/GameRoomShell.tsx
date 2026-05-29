@@ -15,6 +15,8 @@ import { RpsGame } from '@/components/games/rps/RpsGame';
 import { PlaceholderGame } from '@/components/games/PlaceholderGame';
 import { GameSettingsPanel } from '@/components/games/GameSettingsPanel';
 import { MatchScoreChip } from '@/components/games/MatchScoreChip';
+import { AccessModeToggle } from '@/components/lobby/AccessModeToggle';
+import type { LobbyAccessMode } from '@tabswitch/types';
 
 type SupportedGame = 'gif-battle' | 'tictactoe' | 'connect4' | 'rps';
 
@@ -48,20 +50,35 @@ export function GameRoomShell({
   // Register socket listeners ONCE on mount, BEFORE any join attempt, so the
   // first lobby:state broadcast (fired by the server right after the join ack)
   // is never missed by a re-render race.
+  const setToast = useLobby((s) => s.setToast);
   useEffect(() => {
     const socket = getSocket();
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
     const onState = (s: LobbySnapshot) => setSnapshot(s);
+    const onAccessChanged = (payload: { roomCode: string; mode: LobbyAccessMode }) => {
+      setToast({
+        id: `acl-${payload.mode}-${Date.now()}`,
+        kind: 'info',
+        text:
+          payload.mode === 'public'
+            ? 'Lobby passé en mode Public 🌍'
+            : payload.mode === 'friends'
+              ? 'Lobby passé en mode Amis 👥'
+              : 'Lobby passé en mode Privé 🔒',
+      });
+    };
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('lobby:state', onState);
+    socket.on('lobby:accessChanged', onAccessChanged);
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('lobby:state', onState);
+      socket.off('lobby:accessChanged', onAccessChanged);
     };
-  }, [setConnected, setSnapshot]);
+  }, [setConnected, setSnapshot, setToast]);
 
   // Auto-join when the user has a profile nickname (signed-in path). Runs once.
   const autoJoinTried = useRef(false);
@@ -272,6 +289,10 @@ function RoomHeader({
       </div>
 
       <StatusPill status={status} activeCount={activeCount} meta={meta} />
+
+      {snapshot?.you.isHost && snapshot?.room.accessMode && (
+        <AccessModeToggle mode={snapshot.room.accessMode} />
+      )}
 
       {(() => {
         const bestOf = (snapshot?.gameState as { bestOf?: number } | null | undefined)?.bestOf ?? 1;

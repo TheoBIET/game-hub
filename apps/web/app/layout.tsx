@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth';
 import { getDb } from '@tabswitch/db';
 import { isAppTheme, THEME_COOKIE, type AppTheme } from '@/lib/theme';
 import { ThemeSync } from '@/components/hub/ThemeSync';
+import { SocialOverlay } from '@/components/social/SocialOverlay';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,11 +29,13 @@ export const metadata: Metadata = {
  * sufficient because the server only needs `userId` at socket-connect time.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [locale, messages, theme] = await Promise.all([
+  const [locale, messages, theme, session] = await Promise.all([
     getLocale(),
     getMessages(),
     resolveTheme(),
+    auth().catch(() => null),
   ]);
+  const isAuthenticated = !!(session?.user as { id?: string } | undefined)?.id;
 
   return (
     <html lang={locale} data-theme={theme} suppressHydrationWarning>
@@ -40,6 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeSync theme={theme} />
           {children}
+          <SocialOverlay isAuthenticated={isAuthenticated} />
         </NextIntlClientProvider>
       </body>
     </html>
