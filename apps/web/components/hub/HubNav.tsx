@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { auth, signOut } from '@/lib/auth';
 import { getDb } from '@tabswitch/db';
 import { Button } from '@/components/ui/Button';
@@ -11,21 +12,31 @@ export async function HubNav() {
     | { id?: string; email?: string | null; nickname?: string | null }
     | undefined;
 
-  let profile: { nickname: string; slug: string | null } | null = null;
+  let profile: { nickname: string; slug: string | null; avatar: string | null } | null = null;
   if (user?.id) {
     const db = getDb();
     const row = await db.user.findUnique({
       where: { id: user.id },
-      select: { nickname: true, slug: true },
+      select: {
+        nickname: true,
+        slug: true,
+        settings: { select: { avatar: true } },
+      },
     });
     const nickname = row?.nickname || user.nickname || user.email || 'Moi';
-    profile = { nickname, slug: row?.slug ?? null };
+    profile = {
+      nickname,
+      slug: row?.slug ?? null,
+      avatar: row?.settings?.avatar ?? null,
+    };
   }
 
   async function signOutAction() {
     'use server';
     await signOut({ redirectTo: '/' });
   }
+
+  const t = await getTranslations('nav');
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[color:var(--color-bg-950)]/70 backdrop-blur-xl">
@@ -42,11 +53,19 @@ export async function HubNav() {
           <UserMenu
             nickname={profile.nickname}
             slug={profile.slug}
+            avatar={profile.avatar}
             signOutAction={signOutAction}
+            labels={{
+              menu: t('accountMenu'),
+              profile: t('profile'),
+              ideas: t('ideas'),
+              settings: t('settings'),
+              signout: t('signout'),
+            }}
           />
         ) : (
           <Button asChild variant="primary" size="sm">
-            <Link href="/signin">Se connecter</Link>
+            <Link href="/signin">{t('signin')}</Link>
           </Button>
         )}
       </nav>

@@ -10,5 +10,8 @@ export type {
   GameSession,
   Follow,
   GameOutcome,
+  UserSettings,
+  Locale,
+  Theme,
   Prisma,
 } from '../dist/client.js';

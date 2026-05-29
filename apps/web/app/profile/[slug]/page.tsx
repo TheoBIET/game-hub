@@ -27,7 +27,13 @@ export default async function ProfilePage({
   const db = getDb();
   const target = await db.user.findUnique({
     where: { slug },
-    select: { id: true, nickname: true, slug: true, createdAt: true },
+    select: {
+      id: true,
+      nickname: true,
+      slug: true,
+      createdAt: true,
+      settings: { select: { avatar: true } },
+    },
   });
   if (!target || !target.nickname || !target.slug) notFound();
 
@@ -70,6 +76,7 @@ export default async function ProfilePage({
         <ProfileHeader
           nickname={target.nickname}
           slug={target.slug}
+          avatar={target.settings?.avatar ?? null}
           createdAt={target.createdAt}
           followersCount={followersCount}
           followingCount={followingCount}
@@ -87,6 +94,7 @@ export default async function ProfilePage({
 function ProfileHeader({
   nickname,
   slug,
+  avatar,
   createdAt,
   followersCount,
   followingCount,
@@ -95,6 +103,7 @@ function ProfileHeader({
 }: {
   nickname: string;
   slug: string;
+  avatar: string | null;
   createdAt: Date;
   followersCount: number;
   followingCount: number;
@@ -106,7 +115,7 @@ function ProfileHeader({
   return (
     <Card>
       <div className="flex flex-wrap items-center gap-4">
-        <Avatar seed={slug} size={72} />
+        <Avatar seed={slug} src={avatar} size={72} />
         <div className="min-w-0 flex-1">
           <h1 className="font-display truncate text-2xl font-extrabold">{nickname}</h1>
           <p className="truncate text-sm text-[color:var(--color-fg-muted)]">@{slug}</p>

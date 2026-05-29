@@ -31,6 +31,7 @@ model User {
   gameSessions GameSession[]
   follows      Follow[]   @relation("Follower")
   followers    Follow[]   @relation("Following")
+  settings     UserSettings?
 
   @@map("users")
 }
@@ -152,4 +153,31 @@ model Follow {
   @@id([followerId, followingId])
   @@index([followingId], map: "follows_following_idx")
   @@map("follows")
+}
+
+// ============ User preferences ============
+
+enum Locale {
+  fr
+  en
+}
+
+enum Theme {
+  light
+  dark
+  system
+}
+
+model UserSettings {
+  userId    String   @id
+  locale    Locale   @default(fr)
+  theme     Theme    @default(system)
+  /// base64 data URI of the uploaded avatar (gif/png/jpeg/webp, raw <= 8 MB).
+  /// Null means the procedural identicon is used.
+  avatar    String?
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }

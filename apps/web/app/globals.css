@@ -37,6 +37,22 @@
   color-scheme: dark;
 }
 
+/* Light theme overrides — applied via <html data-theme="light"> from the
+ * server (cookie / user prefs) and toggled client-side by ThemeSync when
+ * the user picks "system". Variables are redefined here so every existing
+ * `var(--color-…)` reference flips automatically. */
+html[data-theme='light'] {
+  color-scheme: light;
+  --color-bg-950: #fafafa;
+  --color-bg-900: #f4f4f5;
+  --color-bg-800: #ffffff;
+  --color-bg-700: #e4e4e7;
+  --color-fg: #0b0b10;
+  --color-fg-muted: #52525b;
+  --color-fg-dim: #71717a;
+  --shadow-card: 0 8px 24px -12px rgb(0 0 0 / 0.15);
+}
+
 html,
 body {
   background: var(--color-bg-950);
@@ -95,4 +111,15 @@ body::before {
   background:
     radial-gradient(at 20% 10%, rgb(139 92 246 / 0.12), transparent 40%),
     radial-gradient(at 80% 90%, rgb(217 70 239 / 0.10), transparent 45%);
+}
+
+/* The hub was designed dark-first with white/* tints for borders and
+ * subtle backgrounds. In light mode they read as pure white on white —
+ * map them to black tints so contrast survives without rewriting every
+ * surface. */
+html[data-theme='light'] [class*='border-white/'] {
+  border-color: rgb(0 0 0 / 0.1);
+}
+html[data-theme='light'] [class*='bg-white/'] {
+  background-color: rgb(0 0 0 / 0.04);
 }

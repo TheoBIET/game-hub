@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "signin": "Sign in",
+    "profile": "My profile",
+    "ideas": "Ideas",
+    "settings": "Settings",
+    "signout": "Sign out",
+    "accountMenu": "Account menu"
+  },
+  "footer": {
+    "home": "Home",
+    "ideas": "Ideas",
+    "tagline": "Open source"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Profile, language and theme.",
+    "saved": "Preferences updated.",
+    "saveError": "Could not save, try again.",
+    "language": {
+      "heading": "Language",
+      "description": "Choose the interface language.",
+      "fr": "French",
+      "en": "English"
+    },
+    "theme": {
+      "heading": "Appearance",
+      "description": "Dark by default. System follows your OS.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "avatar": {
+      "heading": "Avatar",
+      "description": "GIF, PNG, JPEG or WebP. 8 MB max.",
+      "current": "Current avatar",
+      "upload": "Choose a file",
+      "remove": "Remove avatar",
+      "removed": "Avatar removed.",
+      "uploading": "Uploading…",
+      "tooLarge": "File too large. Max 8 MB.",
+      "wrongFormat": "Unsupported format. Use GIF, PNG, JPEG or WebP.",
+      "readError": "Could not read the file."
+    },
+    "save": "Save"
+  },
+  "common": {
+    "signinRequired": "You must be signed in."
+  }
+}

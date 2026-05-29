@@ -1,4 +1,11 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
+import { auth } from '@/lib/auth';
+import { getDb } from '@tabswitch/db';
+import { isAppTheme, THEME_COOKIE, type AppTheme } from '@/lib/theme';
+import { ThemeSync } from '@/components/hub/ThemeSync';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,10 +27,41 @@ export const metadata: Metadata = {
  * (`CreateRoomForm`, `GameRoomShell`) calls before opening a socket. That's
  * sufficient because the server only needs `userId` at socket-connect time.
  */
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [locale, messages, theme] = await Promise.all([
+    getLocale(),
+    getMessages(),
+    resolveTheme(),
+  ]);
+
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className="relative min-h-dvh">{children}</body>
+    <html lang={locale} data-theme={theme} suppressHydrationWarning>
+      <body className="relative min-h-dvh">
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeSync theme={theme} />
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
+}
+
+async function resolveTheme(): Promise<AppTheme> {
+  const session = await auth().catch(() => null);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (userId) {
+    try {
+      const db = getDb();
+      const settings = await db.userSettings.findUnique({
+        where: { userId },
+        select: { theme: true },
+      });
+      if (settings?.theme && isAppTheme(settings.theme)) return settings.theme;
+    } catch {
+      // fall through
+    }
+  }
+  const cookie = (await cookies()).get(THEME_COOKIE)?.value;
+  if (isAppTheme(cookie)) return cookie;
+  return 'system';
 }

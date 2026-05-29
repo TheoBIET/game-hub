@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { Github } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 import { LogoMark } from '@/components/hub/Logo';
 
 const REPO_URL = 'https://github.com/theobiet/tabswitch';
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const t = await getTranslations('footer');
   const year = new Date().getFullYear();
   return (
     <footer className="relative z-10 mt-auto border-t border-white/10">
@@ -13,7 +15,7 @@ export function SiteFooter() {
           <LogoMark size={20} />
           <span>
             <span className="font-display font-bold text-[color:var(--color-fg)]">TabSwitch</span>{' '}
-            · © {year} · Open source
+            · © {year} · {t('tagline')}
           </span>
         </div>
 
@@ -22,13 +24,13 @@ export function SiteFooter() {
             href="/"
             className="rounded-lg px-2.5 py-1.5 text-[color:var(--color-fg-muted)] transition-colors hover:bg-white/5 hover:text-white"
           >
-            Accueil
+            {t('home')}
           </Link>
           <Link
             href="/ideas"
             className="rounded-lg px-2.5 py-1.5 text-[color:var(--color-fg-muted)] transition-colors hover:bg-white/5 hover:text-white"
           >
-            Idées
+            {t('ideas')}
           </Link>
           <a
             href={REPO_URL}

@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "signin": "Se connecter",
+    "profile": "Mon profil",
+    "ideas": "Boîte à idées",
+    "settings": "Paramètres",
+    "signout": "Se déconnecter",
+    "accountMenu": "Menu du compte"
+  },
+  "footer": {
+    "home": "Accueil",
+    "ideas": "Idées",
+    "tagline": "Open source"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Profil, langue et thème.",
+    "saved": "Préférences mises à jour.",
+    "saveError": "Impossible de sauvegarder, réessaie.",
+    "language": {
+      "heading": "Langue",
+      "description": "Choisis la langue de l'interface.",
+      "fr": "Français",
+      "en": "Anglais"
+    },
+    "theme": {
+      "heading": "Apparence",
+      "description": "Mode sombre par défaut. Le mode système suit ton OS.",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "avatar": {
+      "heading": "Avatar",
+      "description": "GIF, PNG, JPEG ou WebP. 8 Mo max.",
+      "current": "Avatar actuel",
+      "upload": "Choisir un fichier",
+      "remove": "Supprimer l'avatar",
+      "removed": "Avatar supprimé.",
+      "uploading": "Envoi en cours…",
+      "tooLarge": "Fichier trop lourd. Max 8 Mo.",
+      "wrongFormat": "Format non supporté. Utilise GIF, PNG, JPEG ou WebP.",
+      "readError": "Impossible de lire le fichier."
+    },
+    "save": "Enregistrer"
+  },
+  "common": {
+    "signinRequired": "Tu dois être connecté."
+  }
+}

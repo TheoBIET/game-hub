@@ -2,17 +2,27 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ChevronDown, User, Lightbulb, LogOut } from 'lucide-react';
+import { ChevronDown, User, Lightbulb, Settings, LogOut } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
+
+type UserMenuLabels = {
+  menu: string;
+  profile: string;
+  ideas: string;
+  settings: string;
+  signout: string;
+};
 
 type UserMenuProps = {
   nickname: string;
   slug: string | null;
+  avatar: string | null;
   signOutAction: () => Promise<void>;
+  labels: UserMenuLabels;
 };
 
-export function UserMenu({ nickname, slug, signOutAction }: UserMenuProps) {
+export function UserMenu({ nickname, slug, avatar, signOutAction, labels }: UserMenuProps) {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
@@ -69,7 +79,7 @@ export function UserMenu({ nickname, slug, signOutAction }: UserMenuProps) {
         aria-expanded={open}
         className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-2 text-sm transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary-500)]"
       >
-        <Avatar seed={seed} size={28} />
+        <Avatar seed={seed} src={avatar} size={28} />
         <span className="hidden max-w-[10rem] truncate font-medium sm:inline">{nickname}</span>
         <ChevronDown
           size={16}
@@ -85,7 +95,7 @@ export function UserMenu({ nickname, slug, signOutAction }: UserMenuProps) {
         <div
           ref={menuRef}
           role="menu"
-          aria-label="Menu du compte"
+          aria-label={labels.menu}
           onKeyDown={onMenuKeyDown}
           className="absolute right-0 z-50 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-[color:var(--color-bg-800)] p-1.5 shadow-[var(--shadow-card)] backdrop-blur-xl"
         >
@@ -99,11 +109,15 @@ export function UserMenu({ nickname, slug, signOutAction }: UserMenuProps) {
 
           <Link href={profileHref} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
             <User size={16} className="text-[color:var(--color-fg-muted)]" aria-hidden="true" />
-            Mon profil
+            {labels.profile}
           </Link>
           <Link href="/ideas" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
             <Lightbulb size={16} className="text-[color:var(--color-fg-muted)]" aria-hidden="true" />
-            Boîte à idées
+            {labels.ideas}
+          </Link>
+          <Link href="/settings" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+            <Settings size={16} className="text-[color:var(--color-fg-muted)]" aria-hidden="true" />
+            {labels.settings}
           </Link>
 
           <div className="my-1 h-px bg-white/10" />
@@ -115,7 +129,7 @@ export function UserMenu({ nickname, slug, signOutAction }: UserMenuProps) {
               className={cn(itemClass, 'text-[color:var(--color-danger-500)] hover:bg-rose-500/10')}
             >
               <LogOut size={16} aria-hidden="true" />
-              Se déconnecter
+              {labels.signout}
             </button>
           </form>
         </div>

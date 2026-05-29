@@ -2,6 +2,8 @@ import { cn } from '@/lib/utils';
 
 export type AvatarProps = {
   seed: string;
+  /** Optional image source (data URI or absolute URL). Falls back to identicon. */
+  src?: string | null;
   size?: number;
   className?: string;
 };
@@ -26,7 +28,21 @@ const PALETTES: Array<[string, string]> = [
   ['#22d3ee', '#a855f7'],
 ];
 
-export function Avatar({ seed, size = 36, className }: AvatarProps) {
+export function Avatar({ seed, src, size = 36, className }: AvatarProps) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        className={cn('inline-block rounded-full object-cover shadow-sm', className)}
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      />
+    );
+  }
   const h = hash(seed || 'x');
   const palette = PALETTES[h % PALETTES.length]!;
   const initial = seed.toUpperCase().slice(0, 1) || '?';
