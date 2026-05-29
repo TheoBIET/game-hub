@@ -2,7 +2,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { getDb } from '@tabswitch/db';
-import { looksAbusive, slugify } from '@/lib/moderation';
+import { looksAbusive } from '@/lib/moderation';
+
+function slugify(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .slice(0, 140);
+}
 
 const CreateIdeaSchema = z.object({
   title: z.string().trim().min(4, 'Titre trop court').max(120, 'Titre trop long'),
@@ -90,7 +101,7 @@ export async function POST(req: NextRequest) {
   }
 
   const db = getDb();
-  const slug = slugify(parsed.data.title).slice(0, 140);
+  const slug = slugify(parsed.data.title);
 
   try {
     const inserted = await db.idea.create({
