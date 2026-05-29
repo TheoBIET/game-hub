@@ -104,7 +104,18 @@ export function registerPresenceHandlers(io: Io, socket: TSocket): void {
   const ownerKey = userId ?? `guest:${socket.data.playerId}`;
   const wasFirst = store.addSocket(ownerKey, socket.id);
 
-  if (wasFirst) broadcastGlobal(io);
+  if (wasFirst) {
+    broadcastGlobal(io);
+    log.info(
+      { owner: ownerKey, sid: socket.id, totalUsers: store.globalCount(), ...store._debug() },
+      'presence: user came online',
+    );
+  } else {
+    log.debug(
+      { owner: ownerKey, sid: socket.id, ...store._debug() },
+      'presence: additional socket for known user',
+    );
+  }
 
   // Identified user — join their own inbox room so PR3 invites can target
   // them. Friend subscriptions happen on `presence:hello` (snapshot ack).
@@ -112,11 +123,21 @@ export function registerPresenceHandlers(io: Io, socket: TSocket): void {
 
   socket.on('disconnect', () => {
     const wasLast = store.removeSocket(ownerKey, socket.id);
-    if (!wasLast) return;
+    if (!wasLast) {
+      log.debug(
+        { owner: ownerKey, sid: socket.id, ...store._debug() },
+        'presence: socket gone, user still online via other tab',
+      );
+      return;
+    }
     // Anti-flicker: wait 5s before flipping offline, in case it's a F5.
     store.scheduleOfflineCheck(ownerKey, () => {
       broadcastGlobal(io);
       if (userId) io.to(`friends-of:${userId}`).emit('presence:friend:offline', { userId });
+      log.info(
+        { owner: ownerKey, totalUsers: store.globalCount() },
+        'presence: user went offline',
+      );
     });
   });
 
@@ -157,7 +178,7 @@ async function handleHello(
   const globalOnline = store.globalCount();
 
   if (!userId) {
-    ack({ ok: true, data: { globalOnline, friends: [] } });
+    ack({ ok: true, data: { globalOnline, friends: [], offlineFriends: [] } });
     return;
   }
 
@@ -168,18 +189,28 @@ async function handleHello(
   const friends = await getMutualFriends(userId);
 
   // For each mutual friend: subscribe to their friends-of fanout so I get
-  // their state changes, and assemble their current state for the snapshot.
+  // their state changes, and partition into online (full FriendState) vs
+  // offline (lightweight FriendInfo).
   const friendStates: FriendState[] = [];
+  const offlineFriends: { userId: string; nickname: string; slug: string; avatar: string | null }[] =
+    [];
   for (const f of friends) {
     socket.join(`friends-of:${f.userId}`);
     const s = store.get(f.userId);
     const fs = friendStateOf(f, s);
     if (fs) friendStates.push(fs);
+    else
+      offlineFriends.push({
+        userId: f.userId,
+        nickname: f.nickname,
+        slug: f.slug,
+        avatar: f.avatar,
+      });
   }
 
   // Announce my presence to my friends (in case they were already online).
   const myState = selfStateOf(socket);
   if (myState) io.to(`friends-of:${userId}`).emit('presence:friend', myState);
 
-  ack({ ok: true, data: { globalOnline, friends: friendStates } });
+  ack({ ok: true, data: { globalOnline, friends: friendStates, offlineFriends } });
 }

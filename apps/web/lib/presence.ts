@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import type { FriendState, Invite } from '@tabswitch/types';
+import type { FriendInfo, FriendState, Invite } from '@tabswitch/types';
 import { getSocket } from './socket';
 
 /**
@@ -17,13 +17,20 @@ import { getSocket } from './socket';
 export interface PresenceState {
   ready: boolean;
   globalOnline: number;
+  /** Live FriendState for mutual friends who are currently online. */
   friends: Record<string, FriendState>;
+  /** Mutual friends not currently online — kept around to render in the dock. */
+  offlineFriends: Record<string, FriendInfo>;
   /** Incoming invitations currently displayed (TTL-driven dismissal). */
   incomingInvites: Invite[];
   /** Reset internal state (used on sign-out or hot reload). */
   reset: () => void;
   /** Apply the initial snapshot returned by `presence:hello`. */
-  applySnapshot: (input: { globalOnline: number; friends: FriendState[] }) => void;
+  applySnapshot: (input: {
+    globalOnline: number;
+    friends: FriendState[];
+    offlineFriends: FriendInfo[];
+  }) => void;
   upsertFriend: (f: FriendState) => void;
   removeFriend: (userId: string) => void;
   setGlobal: (count: number) => void;
@@ -35,21 +42,47 @@ export const usePresence = create<PresenceState>((set) => ({
   ready: false,
   globalOnline: 0,
   friends: {},
+  offlineFriends: {},
   incomingInvites: [],
-  reset: () => set({ ready: false, globalOnline: 0, friends: {}, incomingInvites: [] }),
-  applySnapshot: ({ globalOnline, friends }) => {
-    const map: Record<string, FriendState> = {};
-    for (const f of friends) map[f.userId] = f;
-    set({ ready: true, globalOnline, friends: map });
+  reset: () =>
+    set({
+      ready: false,
+      globalOnline: 0,
+      friends: {},
+      offlineFriends: {},
+      incomingInvites: [],
+    }),
+  applySnapshot: ({ globalOnline, friends, offlineFriends }) => {
+    const onlineMap: Record<string, FriendState> = {};
+    for (const f of friends) onlineMap[f.userId] = f;
+    const offlineMap: Record<string, FriendInfo> = {};
+    for (const f of offlineFriends) offlineMap[f.userId] = f;
+    set({ ready: true, globalOnline, friends: onlineMap, offlineFriends: offlineMap });
   },
   upsertFriend: (f) =>
-    set((s) => ({ friends: { ...s.friends, [f.userId]: f } })),
+    set((s) => {
+      // The friend came online — also pull them out of the offline list.
+      const offline = { ...s.offlineFriends };
+      delete offline[f.userId];
+      return { friends: { ...s.friends, [f.userId]: f }, offlineFriends: offline };
+    }),
   removeFriend: (userId) =>
     set((s) => {
-      if (!(userId in s.friends)) return s;
-      const next = { ...s.friends };
-      delete next[userId];
-      return { friends: next };
+      const current = s.friends[userId];
+      if (!current) return s;
+      // Demote: keep the row in `offlineFriends` so they stay visible (grayed).
+      const friends = { ...s.friends };
+      delete friends[userId];
+      const offlineFriends = {
+        ...s.offlineFriends,
+        [userId]: {
+          userId,
+          nickname: current.nickname,
+          slug: current.slug,
+          avatar: current.avatar,
+        },
+      };
+      return { friends, offlineFriends };
     }),
   setGlobal: (count) => set({ globalOnline: count }),
   addInvite: (invite) =>

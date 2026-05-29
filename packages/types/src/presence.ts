@@ -3,7 +3,7 @@
  * Game-agnostic — never imported by game packages.
  */
 
-export type PresenceStatus = 'online' | 'idle' | 'in_lobby' | 'in_game';
+export type PresenceStatus = 'online' | 'idle' | 'in_lobby' | 'in_game' | 'offline';
 
 export type LobbyAccessMode = 'public' | 'friends' | 'private';
 
@@ -24,9 +24,23 @@ export interface FriendState {
   since: number;
 }
 
+/**
+ * Compact identity of a mutual friend — enough to render a row in the dock
+ * when they're offline (no live state to attach).
+ */
+export interface FriendInfo {
+  userId: string;
+  nickname: string;
+  slug: string;
+  avatar: string | null;
+}
+
 export interface PresenceSnapshot {
   globalOnline: number;
+  /** Live state for the friends currently in the presence store. */
   friends: FriendState[];
+  /** Mutual friends not currently online — rendered grayed-out in the dock. */
+  offlineFriends: FriendInfo[];
 }
 
 export interface GlobalPresenceUpdate {

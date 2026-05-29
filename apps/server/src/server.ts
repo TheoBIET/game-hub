@@ -4,16 +4,19 @@ import { log } from './log.js';
 import { createIo } from './io.js';
 import { listGameDefinitions } from './games/registry.js';
 import { wireGifBattlePhrases } from './games/gif-battle-phrases.js';
+import { getPresenceStore } from './presence/index.js';
 
 async function main(): Promise<void> {
   const httpServer = http.createServer((req, res) => {
     if (req.url === '/health') {
+      const presence = getPresenceStore();
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/json');
       res.end(
         JSON.stringify({
           ok: true,
           version: process.env.npm_package_version ?? 'dev',
+          presence: presence._debug(),
         }),
       );
       return;

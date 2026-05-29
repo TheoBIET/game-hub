@@ -20,10 +20,11 @@ import { cn } from '@/lib/utils';
 export function FriendsDock() {
   const [open, setOpen] = React.useState(false);
   const friends = usePresence((s) => s.friends);
+  const offlineFriends = usePresence((s) => s.offlineFriends);
   const ready = usePresence((s) => s.ready);
   const t = useTranslations('social.dock');
 
-  const list = React.useMemo(() => {
+  const onlineList = React.useMemo(() => {
     return Object.values(friends).sort((a, b) => {
       // in_lobby first, then online, then idle, then in_game.
       const rank: Record<string, number> = { in_lobby: 0, online: 1, in_game: 2, idle: 3 };
@@ -33,6 +34,12 @@ export function FriendsDock() {
       return a.nickname.localeCompare(b.nickname, undefined, { sensitivity: 'base' });
     });
   }, [friends]);
+
+  const offlineList = React.useMemo(() => {
+    return Object.values(offlineFriends).sort((a, b) =>
+      a.nickname.localeCompare(b.nickname, undefined, { sensitivity: 'base' }),
+    );
+  }, [offlineFriends]);
 
   // Close on Escape.
   React.useEffect(() => {
@@ -48,7 +55,8 @@ export function FriendsDock() {
   // "0 amis en ligne" before the socket replies.
   if (!ready) return null;
 
-  const count = list.length;
+  const onlineCount = onlineList.length;
+  const totalCount = onlineCount + offlineList.length;
 
   return (
     <>
@@ -57,16 +65,16 @@ export function FriendsDock() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="friends-dock-panel"
-        aria-label={t('toggle', { count })}
-        title={t('toggle', { count })}
+        aria-label={t('toggle', { count: onlineCount })}
+        title={t('toggle', { count: onlineCount })}
         className={cn(
           'fixed bottom-4 right-4 z-40 flex h-12 items-center gap-2 rounded-full border border-white/10 bg-[color:var(--color-bg-900)]/90 px-3 shadow-xl backdrop-blur-lg transition-all hover:bg-[color:var(--color-bg-800)]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary-500)]',
           open && 'opacity-0 pointer-events-none',
         )}
       >
         <Users size={18} className="text-[color:var(--color-fg)]" aria-hidden="true" />
-        <span className="text-sm font-semibold text-[color:var(--color-fg)]">{count}</span>
-        {count > 0 && (
+        <span className="text-sm font-semibold text-[color:var(--color-fg)]">{onlineCount}</span>
+        {onlineCount > 0 && (
           <span className="relative -ml-0.5 inline-flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
@@ -105,7 +113,7 @@ export function FriendsDock() {
                   <Users size={16} className="text-[color:var(--color-accent-300)]" aria-hidden="true" />
                   {t('panelTitle')}
                   <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-normal text-[color:var(--color-fg-muted)]">
-                    {count}
+                    {onlineCount}/{totalCount}
                   </span>
                 </h2>
                 <button
@@ -119,18 +127,52 @@ export function FriendsDock() {
               </header>
 
               <div className="flex-1 overflow-y-auto p-2">
-                {count === 0 ? (
+                {totalCount === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 px-4 py-8 text-center">
                     <Users size={28} className="text-[color:var(--color-fg-muted)]/50" aria-hidden="true" />
                     <p className="text-sm font-medium text-[color:var(--color-fg)]">{t('emptyTitle')}</p>
                     <p className="text-xs text-[color:var(--color-fg-muted)]">{t('emptyHint')}</p>
                   </div>
                 ) : (
-                  <ul className="flex flex-col">
-                    {list.map((f) => (
-                      <FriendRow key={f.userId} friend={f} />
-                    ))}
-                  </ul>
+                  <>
+                    {onlineList.length > 0 && (
+                      <section>
+                        <h3 className="px-2 pb-1 pt-1 text-[10px] uppercase tracking-wider text-[color:var(--color-fg-muted)]">
+                          {t('sectionOnline', { count: onlineCount })}
+                        </h3>
+                        <ul className="flex flex-col">
+                          {onlineList.map((f) => (
+                            <FriendRow key={f.userId} friend={f} />
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                    {offlineList.length > 0 && (
+                      <section className="mt-2">
+                        <h3 className="px-2 pb-1 pt-1 text-[10px] uppercase tracking-wider text-[color:var(--color-fg-muted)]">
+                          {t('sectionOffline', { count: offlineList.length })}
+                        </h3>
+                        <ul className="flex flex-col">
+                          {offlineList.map((f) => (
+                            <FriendRow
+                              key={f.userId}
+                              friend={{
+                                userId: f.userId,
+                                nickname: f.nickname,
+                                slug: f.slug,
+                                avatar: f.avatar,
+                                status: 'offline',
+                                roomCode: null,
+                                gameType: null,
+                                accessMode: null,
+                                since: 0,
+                              }}
+                            />
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>

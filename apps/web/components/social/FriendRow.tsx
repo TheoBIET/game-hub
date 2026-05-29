@@ -14,6 +14,7 @@ const DOT_BY_STATUS: Record<FriendState['status'], string> = {
   idle: 'bg-amber-400',
   in_lobby: 'bg-fuchsia-400',
   in_game: 'bg-fuchsia-400',
+  offline: 'bg-zinc-500',
 };
 
 function gameLabel(gameType: string | null): string {
@@ -66,6 +67,7 @@ export function FriendRow({ friend }: { friend: FriendState }) {
       return friend.roomCode ? `${game} · ${friend.roomCode}` : game;
     }
     if (friend.status === 'idle') return t('statusIdle');
+    if (friend.status === 'offline') return t('statusOffline');
     return t('statusOnline');
   })();
 
@@ -116,14 +118,26 @@ export function FriendRow({ friend }: { friend: FriendState }) {
     return null;
   })();
 
+  const isOffline = friend.status === 'offline';
+
   return (
-    <li className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.03]">
+    <li
+      className={cn(
+        'flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.03]',
+        isOffline && 'opacity-60',
+      )}
+    >
       <Link
         href={`/profile/${friend.slug}`}
         className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary-500)]"
         aria-label={friend.nickname}
       >
-        <Avatar seed={friend.slug || friend.userId} src={friend.avatar} size={36} />
+        <Avatar
+          seed={friend.slug || friend.userId}
+          src={friend.avatar}
+          size={36}
+          className={isOffline ? 'grayscale' : undefined}
+        />
         <span
           className={cn(
             'absolute -bottom-0.5 -right-0.5 inline-block h-2.5 w-2.5 rounded-full ring-2 ring-[color:var(--color-bg-950)]',
