@@ -3,10 +3,10 @@ export const MAX_PLAYERS = 10;
 
 export const PICK_SECONDS_OPTIONS = [30, 45, 60] as const;
 export const VOTE_SECONDS_OPTIONS = [20, 30, 45] as const;
-export const ROUNDS_OPTIONS = [3, 5, 8, 12, 20] as const;
+export const ROUNDS_OPTIONS = [3, 5, 8, 10, 15, 20] as const;
 
 export const DEFAULTS = {
-  rounds: 8 as const,
+  rounds: 10 as const,
   pickSeconds: 45 as const,
   voteSeconds: 30 as const,
   introSeconds: 3,
