@@ -5,6 +5,8 @@ import { getDb } from '@tabswitch/db';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/hub/Logo';
 import { UserMenu } from '@/components/hub/UserMenu';
+import { OnlineCount } from '@/components/social/OnlineCount';
+import { SocialBootstrap } from '@/components/social/SocialBootstrap';
 
 export async function HubNav() {
   const session = await auth();
@@ -49,26 +51,30 @@ export async function HubNav() {
           <Logo />
         </Link>
 
-        {profile ? (
-          <UserMenu
-            nickname={profile.nickname}
-            slug={profile.slug}
-            avatar={profile.avatar}
-            signOutAction={signOutAction}
-            labels={{
-              menu: t('accountMenu'),
-              profile: t('profile'),
-              ideas: t('ideas'),
-              settings: t('settings'),
-              signout: t('signout'),
-            }}
-          />
-        ) : (
-          <Button asChild variant="primary" size="sm">
-            <Link href="/signin">{t('signin')}</Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <OnlineCount />
+          {profile ? (
+            <UserMenu
+              nickname={profile.nickname}
+              slug={profile.slug}
+              avatar={profile.avatar}
+              signOutAction={signOutAction}
+              labels={{
+                menu: t('accountMenu'),
+                profile: t('profile'),
+                ideas: t('ideas'),
+                settings: t('settings'),
+                signout: t('signout'),
+              }}
+            />
+          ) : (
+            <Button asChild variant="primary" size="sm">
+              <Link href="/signin">{t('signin')}</Link>
+            </Button>
+          )}
+        </div>
       </nav>
+      <SocialBootstrap isAuthenticated={!!profile} />
     </header>
   );
 }

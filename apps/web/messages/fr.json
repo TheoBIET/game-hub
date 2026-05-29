@@ -46,5 +46,9 @@
   },
   "common": {
     "signinRequired": "Tu dois être connecté."
+  },
+  "social": {
+    "onlineTooltip": "Joueurs connectés en ce moment",
+    "onlineCount": "{count, plural, =0 {personne en ligne} one {# en ligne} other {# en ligne}}"
   }
 }

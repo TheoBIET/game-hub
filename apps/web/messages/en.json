@@ -46,5 +46,9 @@
   },
   "common": {
     "signinRequired": "You must be signed in."
+  },
+  "social": {
+    "onlineTooltip": "Players currently online",
+    "onlineCount": "{count, plural, =0 {nobody online} one {# online} other {# online}}"
   }
 }

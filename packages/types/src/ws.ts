@@ -17,6 +17,11 @@ import type {
   PlayerId,
   PublicPlayer,
 } from './lobby.js';
+import type {
+  FriendState,
+  GlobalPresenceUpdate,
+  PresenceSnapshot,
+} from './presence.js';
 
 // ============ zod input schemas ============
 
@@ -89,6 +94,17 @@ export type ClientToServerEvents = {
   'chat:send': (input: ChatSendInput, ack: AckCb) => void;
   /** Game-specific actions tunneled through a single handler. */
   'game:action': (input: GameActionInput, ack: AckCb<Record<string, unknown> | undefined>) => void;
+  /**
+   * Social layer. `presence:hello` is sent by the client right after auth to
+   * receive an initial snapshot of friends + global online count, and to opt
+   * the socket into presence broadcasts (it will join the `friends-of:<me>`
+   * room and subscribe to each mutual friend's `friends-of:<friend>` room).
+   * Guests (no userId) get back `{ globalOnline, friends: [] }` and no
+   * subscriptions — they still count towards the global tally.
+   */
+  'presence:hello': (_: Record<string, never>, ack: AckCb<PresenceSnapshot>) => void;
+  /** Idle toggle, emitted by the web client from the Page Visibility API. */
+  'presence:setIdle': (input: { idle: boolean }, ack: AckCb) => void;
 };
 
 export type ServerToClientEvents = {
@@ -101,6 +117,11 @@ export type ServerToClientEvents = {
   'chat:message': (payload: ChatMessage) => void;
   /** Game-specific event tunneled through a single handler. */
   'game:event': (payload: { event: string; payload: unknown }) => void;
+  /** Social-layer fanout. */
+  'presence:friend': (state: FriendState) => void;
+  /** A friend has gone offline (no remaining sockets after the grace window). */
+  'presence:friend:offline': (payload: { userId: string }) => void;
+  'presence:global': (update: GlobalPresenceUpdate) => void;
   'error': (payload: { code: string; message: string; retryable?: boolean }) => void;
 };
 
