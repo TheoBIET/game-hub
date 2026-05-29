@@ -27,54 +27,95 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function buildTypeSequence(): CellType[] {
-  const pool: CellType[] = [];
-  for (const { type, count } of RATIOS) {
-    for (let i = 0; i < count; i++) pool.push(type);
-  }
-  while (pool.length < INNER_COUNT) pool.push('normal');
+  // Stratégie : placer les events en premier dans des positions garantissant
+  // >= 2 cases NORMALES entre chaque event. Ensuite remplir les positions libres
+  // avec malus (non-adjacents entre eux), puis bonus, safe, normal.
 
-  let candidate = shuffle(pool);
-  let attempts = 0;
-  while (!satisfiesConstraints(candidate) && attempts < 200) {
-    candidate = shuffle(pool);
-    attempts++;
-  }
-  if (!satisfiesConstraints(candidate)) {
-    candidate = forceConstraints(candidate);
-  }
-  return candidate;
-}
+  const result: CellType[] = new Array(INNER_COUNT).fill('normal') as CellType[];
+  // Forcer la dernière case (avant finish) à normal
+  result[INNER_COUNT - 1] = 'normal';
 
-function satisfiesConstraints(seq: CellType[]): boolean {
-  let normalsSinceLastEvent = 999;
-  for (let i = 0; i < seq.length; i++) {
-    const type = seq[i]!;
-    if (type === 'malus' && seq[i - 1] === 'malus') return false;
-    if (type === 'event') {
-      if (normalsSinceLastEvent < 2) return false;
-      normalsSinceLastEvent = 0;
-    } else if (type === 'normal') {
-      normalsSinceLastEvent++;
+  // Placer 5 events : chaque event a 2 slots "normal réservés" avant le prochain event.
+  // On travaille sur [0, INNER_COUNT-2] pour protéger la dernière case.
+  const protectedLast = INNER_COUNT - 1;
+  const eventPositions = placeEventsWithNormalGap(5, protectedLast);
+  for (const pos of eventPositions) {
+    result[pos] = 'event';
+  }
+  // Marquer les cases qui DOIVENT rester normal (les 2 cases après chaque event
+  // qui servent de "gap") — elles ne seront pas remplacées
+  const normalLocked = new Set<number>();
+  for (const pos of eventPositions) {
+    for (let g = 1; g <= 2; g++) {
+      const gapPos = pos + g;
+      if (gapPos < protectedLast && result[gapPos] === 'normal') {
+        normalLocked.add(gapPos);
+      }
     }
   }
-  if (seq[seq.length - 1] !== 'normal') return false;
-  return true;
+  normalLocked.add(protectedLast);
+
+  // Positions libres (normal non-locked) pour placer malus, bonus, safe
+  const freePositions = result
+    .map((t, i) => (t === 'normal' && !normalLocked.has(i) ? i : -1))
+    .filter((i) => i >= 0);
+
+  // Placer malus (6) : non-adjacents entre eux
+  const malusPositions = pickNonAdjacentPositions(6, freePositions);
+  const malusSet = new Set(malusPositions);
+  for (const pos of malusPositions) result[pos] = 'malus';
+
+  // Positions restantes après malus
+  const afterMalus = freePositions.filter((p) => !malusSet.has(p));
+  const shuffledAfter = shuffle(afterMalus);
+
+  // Placer bonus (6) et safe (3)
+  for (let i = 0; i < 6 && i < shuffledAfter.length; i++) {
+    result[shuffledAfter[i]!] = 'bonus';
+  }
+  for (let i = 6; i < 9 && i < shuffledAfter.length; i++) {
+    result[shuffledAfter[i]!] = 'safe';
+  }
+
+  return result;
 }
 
-function forceConstraints(seq: CellType[]): CellType[] {
-  const result = [...seq];
-  const lastNormalIdx = [...result].reverse().findIndex(t => t === 'normal');
-  if (lastNormalIdx !== -1 && result[result.length - 1] !== 'normal') {
-    const realIdx = result.length - 1 - lastNormalIdx;
-    [result[result.length - 1], result[realIdx]] = [result[realIdx]!, result[result.length - 1]!];
+// Place `count` events dans [0, maxExcl) avec au moins 2 normals entre chaque event
+// (c'est-à-dire un gap d'au moins 3 indices entre deux events consécutifs).
+function placeEventsWithNormalGap(count: number, maxExcl: number): number[] {
+  // Tenter 500 fois de trouver des positions aléatoires valides
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const candidates = shuffle(Array.from({ length: maxExcl }, (_, i) => i));
+    const selected: number[] = [];
+    for (const pos of candidates) {
+      // Vérifier qu'il y a au moins 3 d'écart avec chaque event déjà placé
+      if (selected.every((p) => Math.abs(p - pos) >= 3)) {
+        selected.push(pos);
+        if (selected.length === count) return selected;
+      }
+    }
   }
-  for (let i = 0; i < result.length - 1; i++) {
-    if (result[i] === 'event' && (result[i + 1] === 'event' || result[i + 1] === 'malus')) {
-      for (let j = i + 2; j < result.length; j++) {
-        if (result[j] === 'normal') {
-          [result[i + 1], result[j]] = [result[j]!, result[i + 1]!];
-          break;
-        }
+  // Fallback déterministe : espacer uniformément
+  const step = Math.floor(maxExcl / (count + 1));
+  return Array.from({ length: count }, (_, i) => step * (i + 1));
+}
+
+// Choisir `count` positions parmi `available` sans adjacence (distance > 1)
+function pickNonAdjacentPositions(count: number, available: number[]): number[] {
+  const shuffled = shuffle(available);
+  const result: number[] = [];
+  for (const pos of shuffled) {
+    if (result.every((p) => Math.abs(p - pos) > 1)) {
+      result.push(pos);
+      if (result.length === count) break;
+    }
+  }
+  // Fallback si pas assez
+  if (result.length < count) {
+    for (const pos of shuffled) {
+      if (!result.includes(pos)) {
+        result.push(pos);
+        if (result.length === count) break;
       }
     }
   }
