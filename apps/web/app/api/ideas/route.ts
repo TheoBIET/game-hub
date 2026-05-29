@@ -2,29 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { getDb } from '@tabswitch/db';
+import { looksAbusive, slugify } from '@/lib/moderation';
 
 const CreateIdeaSchema = z.object({
   title: z.string().trim().min(4, 'Titre trop court').max(120, 'Titre trop long'),
   body: z.string().trim().min(10, 'Décris ton idée (10 chars min)').max(2000),
 });
-
-const PROFANITY = ['putain', 'salaud', 'connard', 'enculé']; // replace with a real moderator V1
-
-function looksAbusive(text: string): boolean {
-  const t = text.toLowerCase();
-  return PROFANITY.some((w) => t.includes(w));
-}
-
-function slugify(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 140);
-}
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
@@ -107,7 +90,7 @@ export async function POST(req: NextRequest) {
   }
 
   const db = getDb();
-  const slug = slugify(parsed.data.title);
+  const slug = slugify(parsed.data.title).slice(0, 140);
 
   try {
     const inserted = await db.idea.create({
